@@ -1,0 +1,51 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Kompilieren",
+			"command": "make",
+			"args": [],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Kompilieren und Ausführen",
+			"command": "make",
+			"args": [
+				"flash"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "shell",
+			"label": "Bereinigen",
+			"command": "make",
+			"args": [
+				"clean"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Serial Monitor",
+			"command": "make",
+			"args": [
+				"hterm"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
+	]
+}

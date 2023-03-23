@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/WinAVR-20100110/avr/include"
+            ],
+            "defines": [
+                "__AVR_ATmega328P__"
+            ],
+            "compilerPath": "C:/WinAVR-20100110/bin/avr-gcc",
+            "cStandard": "gnu11",
+            "intelliSenseMode": "gcc-x64",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "/lib/avr/include/",
+                "${workspaceFolder}/**",
+                "/usr/include"
+            ],
+            "defines": [
+                "__AVR_ATmega328P__"
+            ],
+            "compilerPath": "/usr/bin/avr-gcc",
+            "cStandard": "gnu11",
+            "intelliSenseMode": "${default}",
+            "compilerArgs": [],
+            "cppStandard": "gnu++17"
+        },
+        {
+            "name": "AVR",
+            "intelliSenseMode": "${default}",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "compilerPath": "/usr/bin/avr-gcc",
+            "includePath": [
+                "\\lib\\avr\\include\\**"
+            ],
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}
