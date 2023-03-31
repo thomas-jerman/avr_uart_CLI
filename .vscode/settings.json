@@ -14,5 +14,9 @@
         "kbinput.h": "c",
         "stdlib.h": "c"
     },
-    "ros.distro": "noetic"
+    "ros.distro": "noetic",
+    "vscode-serial-monitor.lineEnding": "\r",
+    "vscode-serial-monitor.dataBits": 8,
+    "vscode-serial-monitor.stopBits": 1,
+    "vscode-serial-monitor.parity": "none"
 }

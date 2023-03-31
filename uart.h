@@ -18,8 +18,10 @@ struct uart
 };
 
 // Initialize USART
-// void usart_init();
 void initUART(uint32_t bps, UARTParity parity);
+
+// configure stdin and stdout to use uart_getchar and uart_putchar for UART communication
+void configSTDIO();
 
 // Configure standard output stream to use USART
 int uart_putchar(char c, FILE *stream);
@@ -27,10 +29,13 @@ int uart_putchar(char c, FILE *stream);
 // Configure standard input stream to use USART
 int uart_getchar(FILE *stream);
 
+// Create command token
 char *getUARTCommand();
 
+// Create parmeter token
 char *getUARTParameter();
 
+// Reset receive_buffer and reactivate RXCIE0
 void resetUART();
 
 #endif // UART_HEADER_

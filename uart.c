@@ -40,14 +40,20 @@ void initUART(uint32_t bps, UARTParity parity)
     // RX Complete Interrupt Enable
     UCSR0B |= (1 << RXCIE0);
 
-    // configure standard output and input stream to use UART
-    fdevopen(&uart_putchar, &uart_getchar);
-
     // init UART0
     UART0.bytes_received = 0;
 
     // enable global interrupt
     sei(); // is equivalent to  SREG |= SREG_I;    
+}
+
+// configure stdin and stdout to use uart_getchar and uart_putchar for UART communication
+void configSTDIO()
+{
+    static FILE uart_stdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
+    static FILE uart_stdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
+    stdout = &uart_stdout;
+    stdin = &uart_stdin;
 }
 
 // Configure standard output stream to use UART
@@ -72,6 +78,7 @@ int uart_getchar(FILE *stream)
     return byte_received;
 }
 
+// Reset receive_buffer and reactivate RXCIE0
 void resetUART()
 {
     memset(UART0.receive_buffer, 0, RECEIVE_BUFFER);
@@ -80,19 +87,22 @@ void resetUART()
     UART0.bytes_received = 0;
     UCSR0A &= ~(1 << RXC0);
     UCSR0B |= (1 << RXCIE0);
-    printf("\nIO>");
+    printf("Done\n");
 }
 
+// Create command token
 char *getUARTCommand()
 {
     return strtok(UART0.receive_buffer, " \n");
 }
 
+// Create parmeter token
 char *getUARTParameter()
 {
     return strtok(NULL, " \n");
 }
 
+// ISR to fill receive_buffer
 ISR(USART_RX_vect)
 {
     if (((UART0.receive_buffer[UART0.bytes_received] = UDR0) == 0x0D || UART0.bytes_received == RECEIVE_BUFFER - 2))
@@ -104,5 +114,6 @@ ISR(USART_RX_vect)
         }
         else UART0.bytes_received = -1;
     }
-    UART0.bytes_received++;   
+    UART0.bytes_received++;
+    PORTB |= (1 << PB5); 
 }

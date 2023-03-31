@@ -21,8 +21,12 @@ int main()
 	double d = M_PI;
 	char *cmd, *param;
 	int a;
+	int c;
 
-	initUART(57600, PARITY_NO);
+	DDRB |= (1 << PB5);
+
+	initUART(115200, PARITY_NO);
+	configSTDIO();
 
 	while (1)
 	{
@@ -117,7 +121,6 @@ int main()
 				printf("INTEGER VALUE: %d\n", a);
 			}
 			else if (strcmp(cmd, "readLimitedDouble") == 0)
-
 			{
 				d = getDouble("ENTER A DOUBLE VALUE [0.0-10.0]: ", 0, 10);
 				printf("DOUBLE VALUE: %lf\n", d);
