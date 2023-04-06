@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -14,16 +16,13 @@
 
 int main()
 {
-	int int_var;
 	int int_min, int_max;
 	char text[BUFFER_LENGTH];
-	char output[BUFFER_LENGTH];
 	double d = M_PI;
-	char *cmd, *param;
+	//double double_min, double_max;
 	int a;
-	int c;
-
-	DDRB |= (1 << PB5);
+	char *cmd;
+	//char *param;
 
 	initUART(115200, PARITY_NO);
 	configSTDIO();
@@ -32,107 +31,70 @@ int main()
 	{
 		if (UART0_CMD_RECEIVED)
 		{
+			showCmdString();
 			cmd = getUARTCommand();
-			printf("Command: [%s]\n", cmd);
-			int_var = 1;
-			do
+
+			if(strcmp(cmd, "giv") == 0)
 			{
-				param = getUARTParameter();
-				if (param != NULL)
-					printf("Param#%d: [%s]\n", int_var++, param);
-			} while (param != NULL);
-
-			// using printf and scanf
-			printf("Enter an integer value: ");
-			if (scanf("%d", &a) < 1)
-				printf("No valid integer value read!\n");
-			else
-				printf("Integer value: %d\n", a);
-
-			printf("Enter a double value: ");
-			while (getchar() != '\n'); // clear input buffer
-			if (scanf("%lf", &d) < 1)
-				printf("No valid double value read!\n");
-			else
-				printf("Double value: %lf\n", d);
-
-			printf("Enter a text without whitespaces: ");
-			while (getchar() != '\n'); // clear input buffer
-			scanf("%s", text);
-			printf("Text without whitespaces: %s\n", text);
-
-			printf("Enter a text with whitespaces: ");
-			while (getchar() != '\n'); // clear input buffer
-			fgets(text, BUFFER_LENGTH, stdin);
-			printf("Text with whitespaces: %s", text);
-
-			// keyboard input functions offered by kbinput.h
-			int_min = 0;
-			int_max = 100;
-			sprintf(output, "ENTER AN INTEGER VALUE [%d-%d]: ", int_min, int_max);
-			a = getInteger(output, int_min, int_max);
-			printf("INTEGER VALUE: %d\n", a);
-
-			d = getDouble("ENTER A DOUBLE VALUE [0.0-10.0]: ", 0, 10);
-			printf("DOUBLE VALUE: %lf\n", d);
-
-			getString("ENTER A TEXT WITH WHITESPACES: ", BUFFER_LENGTH, text);
-			printf("TEXT WITH WHITESPACES: %s", text);
-
-			hitAnyKeyToContinue();
-
-			if (strcmp(cmd, "readInt") == 0)
-			{
-				printf("Enter an integer value: ");
+				printf("Get integer Value: ");
+				fflush(stdin);
 				if (scanf("%d", &a) < 1)
 					printf("No valid integer value read!\n");
 				else
-					printf("Integer value: %d\n", a);
+					printf("Integer Value: %d\n", a);
 			}
-			else if (strcmp(cmd, "readDouble") == 0)
+			else if(strcmp(cmd, "gdv") == 0)
 			{
-				printf("Enter a double value: ");
-				//while (getchar() != '\n'); // clear input buffer
+				printf("Get Double Value: ");
+				fflush(stdin);
 				if (scanf("%lf", &d) < 1)
 					printf("No valid double value read!\n");
 				else
-					printf("Double value: %lf\n", d);
+					printf("Double Value: %lf\n", d);
 			}
-			else if (strcmp(cmd, "readText-WS") == 0)
+			else if(strcmp(cmd, "gw") == 0)
 			{
-				printf("Enter a text without whitespaces: ");
-				//while (getchar() != '\n'); // clear input buffer
+				printf("Get Word: ");
+				fflush(stdin);
 				scanf("%s", text);
-				printf("Text without whitespaces: %s\n", text);
+				printf("Word (without whitespaces): %s\n", text);
 			}
-			else if (strcmp(cmd, "readText+WS") == 0)
-			{
-				printf("Enter a text with whitespaces: ");
-				//while (getchar() != '\n'); // clear input buffer
+			else if(strcmp(cmd, "gs") == 0)
+			{			
+				printf("Get String (with '\\n'): ");
+				fflush(stdin);
 				fgets(text, BUFFER_LENGTH, stdin);
-				printf("Text with whitespaces: %s", text);
+				printf("String (with whitespaces): %s", text);
 			}
-			else if (strcmp(cmd, "readLimitedInt") == 0)
+			else if(strcmp(cmd, "gliv") == 0)	// keyboard input functions offered by kbinput.h
+			{			
+				int_min = atoi(getUARTParameter());
+				int_max = atoi(getUARTParameter());
+				sprintf(text, "Get Limited Integer Value [%d-%d]: ", int_min, int_max);
+				fflush(stdin);
+				a = getInteger(text, int_min, int_max);
+				printf("Limited Integer Value: %d\n", a);
+			}
+			else if(strcmp(cmd, "gldv") == 0)	// keyboard input functions offered by kbinput.h
 			{
-				int_min = 0;
-				int_max = 100;
-				sprintf(output, "ENTER AN INTEGER VALUE [%d-%d]: ", int_min, int_max);
-				a = getInteger(output, int_min, int_max);
-				printf("INTEGER VALUE: %d\n", a);
+				/*
+				double_min = atof(getUARTParameter());
+				double_max = atof(getUARTParameter());
+				sprintf(text, "Get Limited Double Value [%.1lf-%.1lf]: ", double_min, double_max);
+				fflush(stdin);
+				d = getDouble(text, double_min, double_max);
+				printf("Limited Double Value: %lf\n", d);
+				*/
+				
 			}
-			else if (strcmp(cmd, "readLimitedDouble") == 0)
+			else if(strcmp(cmd, "GS") == 0)
 			{
-				d = getDouble("ENTER A DOUBLE VALUE [0.0-10.0]: ", 0, 10);
-				printf("DOUBLE VALUE: %lf\n", d);
+				fflush(stdin);
+				getString("Get String (without '\\n'): ", BUFFER_LENGTH, text);
+				printf("TEXT WITH WHITESPACES: %s\n", text);
 			}
-			else if (strcmp(cmd, "getString") == 0)
-			{
-				getString("ENTER A TEXT WITH WHITESPACES: ", BUFFER_LENGTH, text);
-				printf("TEXT WITH WHITESPACES: %s", text);
-			}
-
-			hitAnyKeyToContinue();
-
+			
+			hitAnyKeyToContinue(stdin);
 			resetUART();
 		}
 	}

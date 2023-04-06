@@ -10,7 +10,7 @@
 struct uart UART0;
 
 void initUART(uint32_t bps, UARTParity parity)
-{
+{  
     // disable global interrupt
     cli(); // is equivalent to  SREG |= SREG_I;
 
@@ -41,19 +41,23 @@ void initUART(uint32_t bps, UARTParity parity)
     UCSR0B |= (1 << RXCIE0);
 
     // init UART0
-    UART0.bytes_received = 0;
+    UART0.bytes_received = 0; 
 
     // enable global interrupt
     sei(); // is equivalent to  SREG |= SREG_I;    
 }
 
-// configure stdin and stdout to use uart_getchar and uart_putchar for UART communication
 void configSTDIO()
 {
     static FILE uart_stdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
     static FILE uart_stdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
     stdout = &uart_stdout;
     stdin = &uart_stdin;
+}
+
+void fflushUART(FILE *uart_stdin)
+{
+    if(uart_stdin->flags > 1)   while (getchar() != '\n');
 }
 
 // Configure standard output stream to use UART
@@ -69,16 +73,11 @@ int uart_putchar(char send_byte, FILE *stream)
 // Configure standard input stream to use UART
 int uart_getchar(FILE *stream)
 {
-    static char byte_received;
     // Wait for character to be received
     while (!(UCSR0A & (1 << RXC0)));
-    // change putty's CR = 0x0D into LF = 0X0A for fgets()
-    if ((byte_received = UDR0) == 0x0D)
-        byte_received = 0x0A;
-    return byte_received;
+    return UDR0;    //return character
 }
 
-// Reset receive_buffer and reactivate RXCIE0
 void resetUART()
 {
     memset(UART0.receive_buffer, 0, RECEIVE_BUFFER);
@@ -87,33 +86,48 @@ void resetUART()
     UART0.bytes_received = 0;
     UCSR0A &= ~(1 << RXC0);
     UCSR0B |= (1 << RXCIE0);
-    printf("Done\n");
+    //printf("\nIO>");
 }
 
-// Create command token
+void resetUARTbuffer()
+{
+    for(int i = 0; UART0.receive_buffer[i] != '\n'; i++) if(UART0.receive_buffer[i] == '\0') UART0.receive_buffer[i] = ' ';
+}
+
+void showCmdString()
+{
+    resetUARTbuffer();
+	int int_var = 1;
+    char *param;
+    printf("Command: [%s]\n", getUARTCommand());
+	do
+	{
+		param = getUARTParameter();
+		if (param != NULL)	printf("Param#%d: [%s]\n", int_var++, param);
+	} while (param != NULL);
+	resetUARTbuffer();
+}
+
 char *getUARTCommand()
 {
-    return strtok(UART0.receive_buffer, " \n");
+    return strtok(UART0.receive_buffer, " \r\n");
 }
 
-// Create parmeter token
 char *getUARTParameter()
 {
-    return strtok(NULL, " \n");
+    return strtok(NULL, " \r\n");
 }
 
-// ISR to fill receive_buffer
 ISR(USART_RX_vect)
 {
-    if (((UART0.receive_buffer[UART0.bytes_received] = UDR0) == 0x0D || UART0.bytes_received == RECEIVE_BUFFER - 2))
+    if (((UART0.receive_buffer[UART0.bytes_received] = UDR0) == 0x0A || UART0.bytes_received == RECEIVE_BUFFER - 2))
     {
         if(UART0.bytes_received)
         {
             UCSR0B &= ~(1 << RXCIE0);
-            UART0.receive_buffer[UART0.bytes_received] = 0x0A;
+            //UART0.receive_buffer[UART0.bytes_received] = 0x0A;
         }
         else UART0.bytes_received = -1;
     }
-    UART0.bytes_received++;
-    PORTB |= (1 << PB5); 
+    UART0.bytes_received++;   
 }

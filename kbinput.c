@@ -69,7 +69,7 @@ char *getString(char text[], int chars_to_read, char dest_string[])
     char s[STRING_BUFFER_LENGTH];
     if (chars_to_read > STRING_BUFFER_LENGTH)
     {
-        printf("Maximum readable characters set to: 80\n ");
+        printf("Maximum readable characters set to: 80\n");
         chars_to_read = STRING_BUFFER_LENGTH;
     }
     do
@@ -81,14 +81,15 @@ char *getString(char text[], int chars_to_read, char dest_string[])
     return dest_string;
 }
 
-void hitAnyKeyToContinue()
+void hitAnyKeyToContinue(FILE *stream)
 {
     char single_char;
     printf("\nHit any key to continue: ");
-    single_char = getchar();
-    if(single_char != '\n') while(getchar() != '\n');
+    if(stream->flags > 1)   while (getchar() != '\n');
+    if((single_char = getchar()) != '\n') while(getchar() != '\n');
 }
 
+//readSingleCharacter
 int readSingleCharacter(char text[])
 {
     printf("%s", text);
