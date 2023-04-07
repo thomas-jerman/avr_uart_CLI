@@ -12,90 +12,132 @@
 #include "uart.h"
 #include "kbinput.h"
 
-#define BUFFER_LENGTH 80
+#define BUFFER_LENGTH 	80
+#define STD_PROMPT		"IO>"
+
+unsigned char gl_uc_logged_in = 0;
 
 int main()
 {
-	int int_min, int_max;
 	char text[BUFFER_LENGTH];
-	double d = M_PI;
-	//double double_min, double_max;
-	int a;
+	double d_val = M_PI;
+	int int_val;
 	char *cmd;
-	//char *param;
 
-	initUART(115200, PARITY_NO);
-	configSTDIO();
+	configSTDIO();					// Configure stdin and stdout to be connected to UART
+	initUART(115200, PARITY_NO);	// Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
+	printf("\nUART Command Line Interface\nCompiled on: %s at %s\n\n", __DATE__, __TIME__);
+	printUARTPrompt(STD_PROMPT); 	// print UART prompt to show, that the ISR handled UART interface is available
 
 	while (1)
 	{
-		if (UART0_CMD_RECEIVED)
+		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a command line can be processed
 		{
-			showCmdString();
-			cmd = getUARTCommand();
+			//printCmd(); 			// print received command and parameters
 
-			if(strcmp(cmd, "giv") == 0)
+			// Command processing
+			if ((cmd = getUARTCmd()) == NULL)
+				printf("\n");
+
+			// Login
+			else if (strcmp(cmd, "login") == 0)
+			{
+				fflush(stdin);
+				getString("Password: ", BUFFER_LENGTH, text);
+				if (strcmp(text, "FIVU") == 0)
+				{
+					printf("Log in successful\n");
+					gl_uc_logged_in = 1;
+				}
+				else
+					printf("Wrong password\n");
+			}
+
+			// Get integer Value
+			else if (strcmp(cmd, "giv") == 0)
 			{
 				printf("Get integer Value: ");
 				fflush(stdin);
-				if (scanf("%d", &a) < 1)
+				if (scanf("%d", &int_val) < 1)
 					printf("No valid integer value read!\n");
 				else
-					printf("Integer Value: %d\n", a);
+					printf("Integer Value: %d\n", int_val);
 			}
-			else if(strcmp(cmd, "gdv") == 0)
+
+			// Get Double Value
+			else if (strcmp(cmd, "gdv") == 0)
 			{
 				printf("Get Double Value: ");
 				fflush(stdin);
-				if (scanf("%lf", &d) < 1)
+				if (scanf("%lf", &d_val) < 1)
 					printf("No valid double value read!\n");
 				else
-					printf("Double Value: %lf\n", d);
+					printf("Double Value: %lf\n", d_val);
 			}
-			else if(strcmp(cmd, "gw") == 0)
+
+			// Get Word until first space character occures
+			else if (strcmp(cmd, "gw") == 0)
 			{
 				printf("Get Word: ");
 				fflush(stdin);
 				scanf("%s", text);
-				printf("Word (without whitespaces): %s\n", text);
+				printf("Word: \"%s\"\n", text);
 			}
-			else if(strcmp(cmd, "gs") == 0)
-			{			
-				printf("Get String (with '\\n'): ");
+
+			// Get String including spaces and '\n'
+			else if (strcmp(cmd, "gs") == 0)
+			{
+				printf("Get String: ");
 				fflush(stdin);
 				fgets(text, BUFFER_LENGTH, stdin);
-				printf("String (with whitespaces): %s", text);
+				printf("String: \"%s\"\n", text);
 			}
-			else if(strcmp(cmd, "gliv") == 0)	// keyboard input functions offered by kbinput.h
-			{			
-				int_min = atoi(getUARTParameter());
-				int_max = atoi(getUARTParameter());
+
+			// Get String including spaces but not '\n'
+			else if (strcmp(cmd, "GS") == 0)
+			{
+				fflush(stdin);
+				getString("Get String (without '\\r\\n'): ", BUFFER_LENGTH, text);
+				printf("\nString (without '\\r\\n'): \"%s\"\n", text);
+			}			
+
+			// Get limited integer input
+			else if (strcmp(cmd, "gliv") == 0) // keyboard input functions offered by kbinput.h
+			{
+				int int_min, int_max;
+				int_min = atoi(getUARTParam());
+				int_max = atoi(getUARTParam());
 				sprintf(text, "Get Limited Integer Value [%d-%d]: ", int_min, int_max);
 				fflush(stdin);
-				a = getInteger(text, int_min, int_max);
-				printf("Limited Integer Value: %d\n", a);
+				int_val = getInteger(text, int_min, int_max);
+				printf("Limited Integer Value: %d\n", int_val);
 			}
-			else if(strcmp(cmd, "gldv") == 0)	// keyboard input functions offered by kbinput.h
+
+			// Get limited double input
+			else if (strcmp(cmd, "gldv") == 0) // keyboard input functions offered by kbinput.h
 			{
-				/*
-				double_min = atof(getUARTParameter());
-				double_max = atof(getUARTParameter());
+				double double_min, double_max;
+				double_min = atoi(getUARTParam());
+				double_max = atoi(getUARTParam());
 				sprintf(text, "Get Limited Double Value [%.1lf-%.1lf]: ", double_min, double_max);
 				fflush(stdin);
-				d = getDouble(text, double_min, double_max);
-				printf("Limited Double Value: %lf\n", d);
-				*/
-				
+				d_val = getDouble(text, double_min, double_max);
+				printf("Limited Double Value: %lf\n", d_val);
 			}
-			else if(strcmp(cmd, "GS") == 0)
-			{
-				fflush(stdin);
-				getString("Get String (without '\\n'): ", BUFFER_LENGTH, text);
-				printf("TEXT WITH WHITESPACES: %s\n", text);
-			}
-			
+			else
+				printf("Command \"%s\" not defined.\n", cmd);
+
+			// additional useful functions
 			hitAnyKeyToContinue(stdin);
-			resetUART();
+			if(readYesNo("Enter new command [y/n]?") == 'y')
+			{
+				printUARTPrompt("CMD>");	// printUARTPrompt() to be used to re-enable interrupt controlled character reception
+				while(!UART_CMD_RECEIVED);
+				printCmd(); 				// print received command and parameters
+			}
+
+			// printUARTPrompt() to be used to re-enable interrupt controlled character reception
+			printUARTPrompt(STD_PROMPT);
 		}
 	}
 }

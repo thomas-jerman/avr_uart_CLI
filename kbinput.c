@@ -58,12 +58,17 @@ double getDouble(char text[], double lower_limit, double upper_limit)
     do
     {
         printf("%s", text);
-        fgets(s, 80, stdin);
+        fgets(s, STRING_BUFFER_LENGTH, stdin);
         result = sscanf(s, "%lf", &doubleValue);
     } while (result < 1 || doubleValue < lower_limit || doubleValue > upper_limit);
     return doubleValue;
 }
 
+/****************************************************************************/
+// char *getString(char text[], int chars_to_read, char dest_string[])
+//
+// Returned string includes spaces but not '\n'
+/****************************************************************************/
 char *getString(char text[], int chars_to_read, char dest_string[])
 {
     char s[STRING_BUFFER_LENGTH];
@@ -77,25 +82,40 @@ char *getString(char text[], int chars_to_read, char dest_string[])
         printf("%s", text);
         fgets(s, chars_to_read, stdin); // fgets also reads the newline character
     } while (strlen(s) == 1);
-    sscanf(s, "%[^\n]s", dest_string);
+    sscanf(s, "%[^\r\n]s", dest_string);
     return dest_string;
 }
 
+/****************************************************************************/
+// void hitAnyKeyToContinue(FILE *stream)
+//
+// Hit any key to continue
+/****************************************************************************/
 void hitAnyKeyToContinue(FILE *stream)
 {
     char single_char;
-    printf("\nHit any key to continue: ");
+    printf("Hit any key to continue: ");
     if(stream->flags > 1)   while (getchar() != '\n');
     if((single_char = getchar()) != '\n') while(getchar() != '\n');
+    printf("\n");
 }
 
-//readSingleCharacter
+/****************************************************************************/
+// int readSingleCharacter(char text[])
+//
+// Read single character used by int readYesNo(char text[])
+/****************************************************************************/
 int readSingleCharacter(char text[])
 {
     printf("%s", text);
     return tolower(getchar());
 }
 
+/****************************************************************************/
+// int readYesNo(char text[])
+//
+// Read Yes or No
+/****************************************************************************/
 int readYesNo(char text[])
 {
     char single_char;
@@ -104,5 +124,6 @@ int readYesNo(char text[])
         single_char = readSingleCharacter(text);
         if(single_char != '\n') while(getchar() != '\n');
     } while (single_char != 'y' && single_char != 'n');
+    printf("\n");
     return single_char;
 }
