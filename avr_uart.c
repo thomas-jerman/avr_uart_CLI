@@ -10,7 +10,7 @@
 #include <avr/interrupt.h>
 
 #include "global.h"
-#include "uart.h"
+#include "avr_uart.h"
 
 // Define maximum number of receivable characters to be 81
 #define SIZE        81
@@ -164,5 +164,4 @@ void printUARTPrompt(char prompt[])
 ISR(USART_RX_vect)
 {
     if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 2)) UCSR0B &= ~(1 << RXCIE0);
-    //UART.rcv_index++;
 }

@@ -9,7 +9,7 @@
 #include <avr/interrupt.h>
 
 #include "global.h"
-#include "uart.h"
+#include "avr_uart.h"
 #include "kbinput.h"
 
 #define BUFFER_LENGTH 	80
