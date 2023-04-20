@@ -1,3 +1,8 @@
+/*  avr_uart.c for UART Communication
+    21.04.2023
+    Thomas Jerman
+*/
+
 #include <stdio.h>
 #include <string.h>
 
@@ -7,16 +12,19 @@
 #include "global.h"
 #include "uart.h"
 
-// Define maximum number of receivable characters to be 80 + 1 for \r
-#define RECEIVE_BUFFER 81
+// Define maximum number of receivable characters to be 81
+#define SIZE        81
+#define LF          0x0A    //Line Feed
+#define CR          0x0D    //Carriage Return
+#define LINE_END    CR
 
-// UArt struct
+// Uart struct
 struct uart
 {
-    uint8_t bytes_received;
-    char receive_buffer[RECEIVE_BUFFER];
-    char receive_char;
-} UART0;
+    uint8_t rcv_index;    //receive index
+    char rcv_buf[SIZE];   //receive buffer
+    char char_rcvd;       //char received
+} UART;
 
 // Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
 void initUART(uint32_t bps, uint8_t parity)
@@ -50,6 +58,9 @@ void initUART(uint32_t bps, uint8_t parity)
     // RX Complete Interrupt Enable is set by printUARTPrompt()
     // UCSR0B |= (1 << RXCIE0);
 
+    // set UART.rcv_buf to be zero
+    memset(UART.rcv_buf, 0, SIZE);
+
     // enable global interrupt
     sei(); // is equivalent to  SREG |= SREG_I;
 }
@@ -67,12 +78,6 @@ void configSTDIO()
 // Gets rid of all left over characters before new characters are expected
 void fflushUART(FILE *uart_stdin)
 {
-    /*
-    printf("uart_stdin->flags: [%x]\n", uart_stdin->flags);
-    printf("uart_stdin->unget: [%c]\n", uart_stdin->unget);
-    printf("uart_stdin->len:   [%d]\n", uart_stdin->len);
-    printf("udata:             [%s]\n", uart_stdin->udata);
-    */
     if (uart_stdin->flags > 1)
         while (getchar() != '\n');
 }
@@ -93,15 +98,15 @@ int uart_getchar(FILE *stream)
     // Wait for character to be received
     while (!(UCSR0A & (1 << RXC0)));
     // Save the received byte
-    UART0.receive_char = UDR0;
+    UART.char_rcvd = UDR0;
     // Return the received byte or change it to \n if \r has been received
-    return UART0.receive_char != '\r' ? UART0.receive_char : '\n';
+    return UART.char_rcvd != '\r' ? UART.char_rcvd : '\n';
 }
 
 // Get command from reveived string
 char *getUARTCmd()
 {
-    return strtok(UART0.receive_buffer, " \r\n");
+    return strtok(UART.rcv_buf, " \r\n");
 }
 
 // Get parameter on each consecutive call of this function
@@ -115,15 +120,15 @@ char *getUARTParam()
 // Set all '\0' introduced by strtok back to ' '
 void reshapeUARTbuffer()
 {
-    for (int i = 0; UART0.receive_buffer[i] != '\n' && i < RECEIVE_BUFFER; i++)
-        if (UART0.receive_buffer[i] == '\0')
-            UART0.receive_buffer[i] = ' ';
+    for (int i = 0; UART.rcv_buf[i] != '\n' && i < SIZE; i++)
+        if (UART.rcv_buf[i] == '\0')
+            UART.rcv_buf[i] = ' ';
 }
 
 // Print received command and all parameters available
 void printCmd()
 {
-    if (UART0.bytes_received)
+    if (UART.rcv_index)
     {
         int int_var = 1;
         char *p;
@@ -133,7 +138,7 @@ void printCmd()
             printf("No cmd available!");
         do
         {
-            if ((p = getUARTParam()) != NULL)
+            if ((p = getUARTParam()) != NULL && *p != CR)
                 printf("Param#%d: [%s]\n", int_var++, p);
         } while (p != NULL);
         reshapeUARTbuffer();
@@ -145,12 +150,11 @@ void printCmd()
 void printUARTPrompt(char prompt[])
 {
     fflush(stdin);
-    memset(UART0.receive_buffer, 0, RECEIVE_BUFFER);
-    UART0.receive_buffer[RECEIVE_BUFFER - 2] = '\n';
-    UART0.receive_buffer[RECEIVE_BUFFER - 3] = '\r';
-    UART0.bytes_received = UDR0;
-    UART0.bytes_received = UDR0;
-    UART0.bytes_received = 0;
+    memset(UART.rcv_buf, 0, SIZE);
+    UART.rcv_buf[SIZE - 2] = '\n';
+    UART.rcv_index = UDR0;  //read UDR0 to empty it
+    UART.rcv_index = UDR0;  //read UDR0 to empty it
+    UART.rcv_index = 0;
     printf("%s", prompt);
     UCSR0A &= ~(1 << RXC0);
     UCSR0B |= (1 << RXCIE0);
@@ -159,6 +163,6 @@ void printUARTPrompt(char prompt[])
 // ISR for character reception
 ISR(USART_RX_vect)
 {
-    if (((UART0.receive_buffer[UART0.bytes_received] = UDR0) == 0x0D || UART0.bytes_received == RECEIVE_BUFFER - 2)) UCSR0B &= ~(1 << RXCIE0);
-    UART0.bytes_received++;
+    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 2)) UCSR0B &= ~(1 << RXCIE0);
+    //UART.rcv_index++;
 }

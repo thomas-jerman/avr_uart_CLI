@@ -1,4 +1,4 @@
-/*  kbinput.h - C file for keyboard input functions
+/*  kbinput.c for keyboard input functions
     28.09.2020
     Thomas Jerman
 */

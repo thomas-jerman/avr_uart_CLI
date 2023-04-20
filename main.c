@@ -33,12 +33,11 @@ int main()
 	{
 		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a command line can be processed
 		{
-			//printCmd(); 			// print received command and parameters
+			printCmd(); 			// print received command and parameters
 
 			// Command processing
 			if ((cmd = getUARTCmd()) == NULL)
 				printf("\n");
-
 			// Login
 			else if (strcmp(cmd, "login") == 0)
 			{
