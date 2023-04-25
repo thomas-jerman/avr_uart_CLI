@@ -12,18 +12,19 @@
 #include "global.h"
 #include "avr_uart.h"
 
-// Define maximum number of receivable characters to be 81
-#define SIZE        81
-#define LF          0x0A    //Line Feed
-#define CR          0x0D    //Carriage Return
-#define LINE_END    CR
+#define REC_CHAR_MAX    80      // REC_CHAR_MAX: maximum number of receivable characters 
+#define LF              0x0A    // Line Feed
+#define CR              0x0D    // Carriage Return
+
+#define LINE_END        CR
+#define SIZE            REC_CHAR_MAX + 1
 
 // Uart struct
 struct uart
 {
-    uint8_t rcv_index;    //receive index
-    char rcv_buf[SIZE];   //receive buffer
-    char char_rcvd;       //char received
+    uint8_t rcv_index;          // receive index
+    char rcv_buf[SIZE];         // receive buffer
+    char char_rcvd;             // char received
 } UART;
 
 // Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
@@ -138,7 +139,7 @@ void printCmd()
             printf("No cmd available!");
         do
         {
-            if ((p = getUARTParam()) != NULL && *p != CR)
+            if ((p = getUARTParam()) != NULL)
                 printf("Param#%d: [%s]\n", int_var++, p);
         } while (p != NULL);
         reshapeUARTbuffer();
@@ -151,9 +152,9 @@ void printUARTPrompt(char prompt[])
 {
     fflush(stdin);
     memset(UART.rcv_buf, 0, SIZE);
-    UART.rcv_buf[SIZE - 2] = '\n';
-    UART.rcv_index = UDR0;  //read UDR0 to empty it
-    UART.rcv_index = UDR0;  //read UDR0 to empty it
+    UART.rcv_buf[SIZE - 1] = '\n';
+    UART.rcv_index = UDR0;  // read UDR0 to empty it
+    UART.rcv_index = UDR0;  // read UDR0 to empty it
     UART.rcv_index = 0;
     printf("%s", prompt);
     UCSR0A &= ~(1 << RXC0);
@@ -163,5 +164,5 @@ void printUARTPrompt(char prompt[])
 // ISR for character reception
 ISR(USART_RX_vect)
 {
-    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 2)) UCSR0B &= ~(1 << RXCIE0);
+    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 3)) UCSR0B &= ~(1 << RXCIE0);
 }
