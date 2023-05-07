@@ -27,17 +27,18 @@ int main()
 	configSTDIO();					// Configure stdin and stdout to be connected to UART
 	initUART(115200, PARITY_NO);	// Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
 	printf("\nUART Command Line Interface\nCompiled on: %s at %s\n\n", __DATE__, __TIME__);
-	printUARTPrompt(STD_PROMPT); 	// print UART prompt to show, that the ISR handled UART interface is available
+	printUARTPrompt(STD_PROMPT); 	// print UART prompt to show, that the ISR-driven UART interface is available
 
 	while (1)
 	{
-		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a command line can be processed
+		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a recevied command line can be processed
 		{
 			printCmd(); 			// print received command and parameters
 
 			// Command processing
 			if ((cmd = getUARTCmd()) == NULL)
 				printf("\n");
+
 			// Login
 			else if (strcmp(cmd, "login") == 0)
 			{
@@ -52,7 +53,7 @@ int main()
 					printf("Wrong password\n");
 			}
 
-			// Get integer Value
+			// Get Integer Value
 			else if (strcmp(cmd, "giv") == 0)
 			{
 				printf("Get integer Value: ");
@@ -127,6 +128,8 @@ int main()
 				printf("Command \"%s\" not defined.\n", cmd);
 
 			// additional useful functions
+			
+			fflush(stdin);
 			hitAnyKeyToContinue(stdin);
 			if(readYesNo("Enter new command [y/n]?") == 'y')
 			{
@@ -135,8 +138,7 @@ int main()
 				printCmd(); 				// print received command and parameters
 			}
 
-			// printUARTPrompt() to be used to re-enable interrupt controlled character reception
-			printUARTPrompt(STD_PROMPT);
+			printUARTPrompt(STD_PROMPT);	//to be used to re-enable interrupt controlled character reception
 		}
 	}
 }

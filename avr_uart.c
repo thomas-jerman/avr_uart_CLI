@@ -1,5 +1,5 @@
 /*  avr_uart.c for UART Communication
-    21.04.2023
+    07.05.2023
     Thomas Jerman
 */
 
@@ -121,7 +121,7 @@ char *getUARTParam()
 // Set all '\0' introduced by strtok back to ' '
 void reshapeUARTbuffer()
 {
-    for (int i = 0; UART.rcv_buf[i] != '\n' && i < SIZE; i++)
+    for (int i = 0; UART.rcv_buf[i] != '\n' && i < SIZE - 1; i++)
         if (UART.rcv_buf[i] == '\0')
             UART.rcv_buf[i] = ' ';
 }
@@ -139,8 +139,8 @@ void printCmd()
             printf("No cmd available!");
         do
         {
-            if ((p = getUARTParam()) != NULL)
-                printf("Param#%d: [%s]\n", int_var++, p);
+            if ((p = getUARTParam()) != NULL && p < UART.rcv_buf + SIZE)
+                printf("Param#%X: [%s]\n", int_var++, p);
         } while (p != NULL);
         reshapeUARTbuffer();
     }
@@ -164,5 +164,5 @@ void printUARTPrompt(char prompt[])
 // ISR for character reception
 ISR(USART_RX_vect)
 {
-    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 3)) UCSR0B &= ~(1 << RXCIE0);
+    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 2)) UCSR0B &= ~(1 << RXCIE0);
 }

@@ -93,10 +93,8 @@ char *getString(char text[], int chars_to_read, char dest_string[])
 /****************************************************************************/
 void hitAnyKeyToContinue(FILE *stream)
 {
-    char single_char;
     printf("Hit any key to continue: ");
-    if(stream->flags > 1)   while (getchar() != '\n');
-    if((single_char = getchar()) != '\n') while(getchar() != '\n');
+    while(getchar() != '\n');
     printf("\n");
 }
 
