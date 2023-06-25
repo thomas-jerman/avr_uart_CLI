@@ -1,6 +1,6 @@
 /*  avr_uart.c for UART Communication
-    07.05.2023
-    Thomas Jerman
+    26.06.2023
+    Thomas Jerman and Michael Lieschnegg
 */
 
 #include <stdio.h>
@@ -12,21 +12,19 @@
 #include "global.h"
 #include "avr_uart.h"
 
-#define REC_CHAR_MAX    80      // REC_CHAR_MAX: maximum number of receivable characters 
+#define REC_CHAR_MAX    80      // REC_CHAR_MAX: maximum number of receivable characters
 #define LF              0x0A    // Line Feed
 #define CR              0x0D    // Carriage Return
 
 #define LINE_END        CR
 #define SIZE            REC_CHAR_MAX + 1
 
-#define QUOTE           '"'
-
 // Uart struct
 struct uart
 {
-    uint8_t rcv_index;          // receive index
-    char rcv_buf[SIZE];         // receive buffer
-    char char_rcvd;             // char received
+    uint8_t rcv_index;  // receive index
+    char rcv_buf[SIZE]; // receive buffer
+    char char_rcvd;     // char received
 } UART;
 
 // Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
@@ -99,7 +97,8 @@ int uart_putchar(char send_byte, FILE *stream)
 int uart_getchar(FILE *stream)
 {
     // Wait for character to be received
-    while (!(UCSR0A & (1 << RXC0)));
+    while (!(UCSR0A & (1 << RXC0)))
+        ;
     // Save the received byte
     UART.char_rcvd = UDR0;
     // Return the received byte or change it to \n if \r has been received
@@ -112,16 +111,16 @@ char *getUARTCmd()
     return strtok(UART.rcv_buf, " \r\n");
 }
 
-// Get parameter on each consecutive call of this function, which 
+// Get parameter on each consecutive call of this function, which
 // processes strings under quotes ss one single string
 // Make sure to check if param != NULL after each function call
 char *getUARTParam()
 {
-    char *p = strtok(NULL, " \r\n");    //tokenize on next space character
-    if(*p == QUOTE)                 //check for a quote character
-    {   
-        *strchr(p++,'\0') = ' ';    //restore space character
-        p = strtok(p, "\"\r\n");        //tokenize on next quote character
+    char *p = strtok(NULL, " \r\n");    // tokenize on next space character
+    if (*p == '"')                      // check for a quote character
+    {
+        *strchr(p++, '\0') = ' ';       // restore space character
+        p = strtok(p, "\"\r\n");        // tokenize on next quote character
     }
     return p;
 }
@@ -130,9 +129,12 @@ char *getUARTParam()
 // Set all '\0' introduced by strtok back to ' '
 void reshapeUARTbuffer()
 {
-    for (int i = 0; UART.rcv_buf[i] != '\n' && i < SIZE - 1; i++)
+    for (int i = 0; i < SIZE - 1; i++)
         if (UART.rcv_buf[i] == '\0')
             UART.rcv_buf[i] = ' ';
+
+    if (UART.rcv_index == SIZE - 1)
+        while (getchar() != '\n');
 }
 
 // Print received command and all parameters available
@@ -162,8 +164,8 @@ void printUARTPrompt(char prompt[])
     fflush(stdin);
     memset(UART.rcv_buf, 0, SIZE);
     UART.rcv_buf[SIZE - 1] = '\n';
-    UART.rcv_index = UDR0;  // read UDR0 to empty it
-    UART.rcv_index = UDR0;  // read UDR0 to empty it
+    UART.rcv_index = UDR0; // read UDR0 to empty it
+    UART.rcv_index = UDR0; // read UDR0 to empty it
     UART.rcv_index = 0;
     printf("%s", prompt);
     UCSR0A &= ~(1 << RXC0);
@@ -173,5 +175,6 @@ void printUARTPrompt(char prompt[])
 // ISR for character reception
 ISR(USART_RX_vect)
 {
-    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || UART.rcv_index++ == SIZE - 2)) UCSR0B &= ~(1 << RXCIE0);
+    if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || ++UART.rcv_index == SIZE - 1))
+        UCSR0B &= ~(1 << RXCIE0);
 }
