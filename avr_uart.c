@@ -19,6 +19,8 @@
 #define LINE_END        CR
 #define SIZE            REC_CHAR_MAX + 1
 
+#define QUOTE           '"'
+
 // Uart struct
 struct uart
 {
@@ -110,11 +112,18 @@ char *getUARTCmd()
     return strtok(UART.rcv_buf, " \r\n");
 }
 
-// Get parameter on each consecutive call of this function
-// make sure to check if param != NULL on each function call
+// Get parameter on each consecutive call of this function, which 
+// processes strings under quotes ss one single string
+// Make sure to check if param != NULL after each function call
 char *getUARTParam()
 {
-    return strtok(NULL, " \r\n");
+    char *p = strtok(NULL, " \r\n");    //tokenize on next space character
+    if(*p == QUOTE)                 //check for a quote character
+    {   
+        *strchr(p++,'\0') = ' ';    //restore space character
+        p = strtok(p, "\"\r\n");        //tokenize on next quote character
+    }
+    return p;
 }
 
 // Reshape UART buffer after command and parameters have been read

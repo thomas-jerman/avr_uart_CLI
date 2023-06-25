@@ -125,7 +125,7 @@ int main()
 				printf("Limited Double Value: %lf\n", d_val);
 			}
 			else
-				printf("Command \"%s\" not defined.\n", cmd);
+				printf("Command: [%s] not defined.\n", cmd);
 
 			// additional useful functions
 			
