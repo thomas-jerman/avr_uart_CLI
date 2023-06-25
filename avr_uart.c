@@ -97,8 +97,7 @@ int uart_putchar(char send_byte, FILE *stream)
 int uart_getchar(FILE *stream)
 {
     // Wait for character to be received
-    while (!(UCSR0A & (1 << RXC0)))
-        ;
+    while (!(UCSR0A & (1 << RXC0)));
     // Save the received byte
     UART.char_rcvd = UDR0;
     // Return the received byte or change it to \n if \r has been received

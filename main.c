@@ -136,6 +136,7 @@ int main()
 				printUARTPrompt("CMD>");	// printUARTPrompt() to be used to re-enable interrupt controlled character reception
 				while(!UART_CMD_RECEIVED);
 				printCmd(stdin); 				// print received command and parameters
+				hitAnyKeyToContinue(stdin);
 			}
 
 			printUARTPrompt(STD_PROMPT);	//to be used to re-enable interrupt controlled character reception
