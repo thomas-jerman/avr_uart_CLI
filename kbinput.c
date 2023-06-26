@@ -91,7 +91,7 @@ char *getString(char text[], int chars_to_read, char dest_string[])
 //
 // Hit any key to continue
 /****************************************************************************/
-void hitAnyKeyToContinue(FILE *stream)
+void hitEnterToContinue(FILE *stream)
 {
     printf("Hit any key to continue: ");
     while(getchar() != '\n');

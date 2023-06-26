@@ -4,7 +4,7 @@
 // Makro for using the receive interrupt enable bit (RXCIE0) as an indicator for
 // successful command reception. RXCIE0 is disabled in ISR(USART_RX_vect)
 // once '\n' has been received or the buffer has got full.
-#define UART_CMD_RECEIVED !(UCSR0B & (1 << RXCIE0))
+#define UART_CMD_RECEIVED   !(UCSR0B & (1 << RXCIE0))
 
 // Type definition for parity settings
 typedef enum
@@ -12,7 +12,7 @@ typedef enum
     PARITY_NO = 0,
     PARITY_EVEN = 2,
     PARITY_ODD = 3
-}UARTParity;
+} UARTParity;
 
 // Initialize UART with custom bitrate and partiy setting
 // 8 bits of data and one stop bit
@@ -43,8 +43,8 @@ char *getUARTParam();
 // Set all '\0' introduced by strtok back to ' '
 void reshapeUARTbuffer();
 
-// Print received command and all parameters available
-void printCmd();
+// Process and print received command and all parameters available
+void processCmd(unsigned char print);
 
 // Reset UART to enable new ISR controlled data reception and
 // print UART prompt to let the user know a new command can be received

@@ -23,9 +23,11 @@ int main()
 	double d_val = M_PI;
 	int int_val;
 	char *cmd;
-
+	uint8_t cmd_print = 1;			// Enabling command and parameter printing on cmd processing
+	
 	configSTDIO();					// Configure stdin and stdout to be connected to UART
 	initUART(115200, PARITY_NO);	// Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
+
 	printf("\nUART Command Line Interface\nCompiled on: %s at %s\n\n", __DATE__, __TIME__);
 	printUARTPrompt(STD_PROMPT); 	// print UART prompt to show, that the ISR-driven UART interface is available
 
@@ -33,11 +35,21 @@ int main()
 	{
 		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a recevied command line can be processed
 		{
-			printCmd(); 			// print received command and parameters
+			processCmd(cmd_print); 	// mandatory function to process and print received commands and parameters regarding cmd_print being 0 or 1
 
-			// Command processing
+			// Getting Command
 			if ((cmd = getUARTCmd()) == NULL)
 				printf("\n");
+
+			// Set Command Printing
+			else if(strcmp(cmd, "scp") == 0)
+			{
+				cmd_print = atoi(getUARTParam());
+				if(cmd_print)
+					printf("Command printing enabled.\n");
+				else
+					printf("Command printing disabled!\n");
+			}
 
 			// Login
 			else if (strcmp(cmd, "login") == 0)
@@ -124,19 +136,18 @@ int main()
 				d_val = getDouble(text, double_min, double_max);
 				printf("Limited Double Value: %lf\n", d_val);
 			}
-			else
+			else if(cmd_print)
 				printf("Command: [%s] not defined.\n", cmd);
 
 			// additional useful functions
-			
 			fflush(stdin);
-			hitAnyKeyToContinue(stdin);
+			hitEnterToContinue(stdin);
 			if(readYesNo("Enter new command [y/n]?") == 'y')
 			{
 				printUARTPrompt("CMD>");	// printUARTPrompt() to be used to re-enable interrupt controlled character reception
 				while(!UART_CMD_RECEIVED);
-				printCmd(stdin); 				// print received command and parameters
-				hitAnyKeyToContinue(stdin);
+				processCmd(cmd_print);
+				hitEnterToContinue(stdin);
 			}
 
 			printUARTPrompt(STD_PROMPT);	//to be used to re-enable interrupt controlled character reception

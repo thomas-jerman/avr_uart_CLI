@@ -6,7 +6,7 @@
 int getInteger(char text[],int lower_limit,int upper_limit);
 double getDouble(char text[],double lower_limit,double upper_limit);
 char* getString(char text[], int chars_to_read, char dest_string[]);
-void hitAnyKeyToContinue(FILE *stream);
+void hitEnterToContinue(FILE *stream);
 int readSingleCharacter(char text[]);
 int readYesNo(char text[]);
 

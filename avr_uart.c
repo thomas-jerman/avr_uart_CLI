@@ -136,24 +136,27 @@ void reshapeUARTbuffer()
         while (getchar() != '\n');
 }
 
-// Print received command and all parameters available
-void printCmd()
+// Process and print received command and all parameters available
+// Input parameter unsigned char print:
+// Use #define PRINT_CMD 1 to print received command and parameters
+// Use #define NO_PRINT  0 to just process data without printing
+void processCmd(unsigned char print)
 {
     if (UART.rcv_index)
-    {
-        int int_var = 1;
-        char *p;
-        if ((p = getUARTCmd()) != NULL)
-            printf("Command: [%s]\n", p);
-        else
-            printf("No cmd available!");
-        do
         {
-            if ((p = getUARTParam()) != NULL && p < UART.rcv_buf + SIZE)
-                printf("Param#%X: [%s]\n", int_var++, p);
-        } while (p != NULL);
-        reshapeUARTbuffer();
-    }
+            int int_var = 1;
+            char *p;
+            if ((p = getUARTCmd()) != NULL && print)
+                printf("Command: [%s]\n", p);
+            else if(print)
+                    printf("No cmd available!");
+            do
+            {
+                if ((p = getUARTParam()) != NULL && p < UART.rcv_buf + SIZE && print)
+                    printf("Param#%X: [%s]\n", int_var++, p);
+            } while (p != NULL);
+            reshapeUARTbuffer();
+        }
 }
 
 // Reset UART to enable new ISR controlled data reception and
@@ -175,5 +178,5 @@ void printUARTPrompt(char prompt[])
 ISR(USART_RX_vect)
 {
     if (((UART.rcv_buf[UART.rcv_index] = UDR0) == LINE_END || ++UART.rcv_index == SIZE - 1))
-        UCSR0B &= ~(1 << RXCIE0);
+        UCSR0B &= ~(1 << RXCIE0);   // disable Receive Interrupt
 }
