@@ -22,8 +22,9 @@ int main()
 	char text[BUFFER_LENGTH];
 	double d_val = M_PI;
 	int int_val;
-	char *cmd;
-	uint8_t cmd_print = 1;			// Enabling command and parameter printing on cmd processing
+	char *cmd, *param;
+	unsigned char num_of_params = 0;
+	uint8_t printCMD = 1;			// Enabling command and parameter printing on cmd processing
 	
 	configSTDIO();					// Configure stdin and stdout to be connected to UART
 	initUART(115200, PARITY_NO);	// Initialize UART with custom bitrate and partiy setting unsing 8 bit data, 1 stop bit
@@ -35,7 +36,7 @@ int main()
 	{
 		if (UART_CMD_RECEIVED)		// If receive interrupt enable bit (RXCIE0) is deactivated by ISR, a recevied command line can be processed
 		{
-			processCmd(cmd_print); 	// mandatory function to process and print received commands and parameters regarding cmd_print being 0 or 1
+			num_of_params = processCMD(printCMD); 	// mandatory function to process and print received commands and parameters regarding printCMD being 0 or 1
 
 			// Getting Command
 			if ((cmd = getUARTCmd()) == NULL)
@@ -44,11 +45,12 @@ int main()
 			// Set Command Printing
 			else if(strcmp(cmd, "scp") == 0)
 			{
-				cmd_print = atoi(getUARTParam());
-				if(cmd_print)
-					printf("Command printing enabled.\n");
-				else
-					printf("Command printing disabled!\n");
+				if((param = getUARTParam()) != NULL)
+				{
+					if((printCMD = atoi(param)))	printf("Command printing enabled.\n");
+					else							printf("Command printing disabled!\n");
+				}
+				else printf("Parameter missing [0/1]!\n");
 			}
 
 			// Login
@@ -136,8 +138,7 @@ int main()
 				d_val = getDouble(text, double_min, double_max);
 				printf("Limited Double Value: %lf\n", d_val);
 			}
-			else if(cmd_print)
-				printf("Command: [%s] not defined.\n", cmd);
+			else printf("Command: [%s] not defined.\n", cmd);
 
 			// additional useful functions
 			fflush(stdin);
@@ -146,7 +147,7 @@ int main()
 			{
 				printUARTPrompt("CMD>");	// printUARTPrompt() to be used to re-enable interrupt controlled character reception
 				while(!UART_CMD_RECEIVED);
-				processCmd(cmd_print);
+				processCMD(printCMD);
 				hitEnterToContinue(stdin);
 			}
 

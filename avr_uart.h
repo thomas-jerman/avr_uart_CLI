@@ -44,7 +44,7 @@ char *getUARTParam();
 void reshapeUARTbuffer();
 
 // Process and print received command and all parameters available
-void processCmd(unsigned char print);
+unsigned char processCMD(unsigned char print);
 
 // Reset UART to enable new ISR controlled data reception and
 // print UART prompt to let the user know a new command can be received

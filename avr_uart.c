@@ -121,7 +121,10 @@ char *getUARTParam()
         *strchr(p++, '\0') = ' ';       // restore space character
         p = strtok(p, "\"\r\n");        // tokenize on next quote character
     }
-    return p;
+    if (p < UART.rcv_buf + SIZE)
+        return p;
+    else
+        return NULL;
 }
 
 // Reshape UART buffer after command and parameters have been read
@@ -140,23 +143,28 @@ void reshapeUARTbuffer()
 // Input parameter unsigned char print:
 // Use #define PRINT_CMD 1 to print received command and parameters
 // Use #define NO_PRINT  0 to just process data without printing
-void processCmd(unsigned char print)
+unsigned char processCMD(unsigned char print)
 {
+    //for(int i = 0; i < SIZE -1; i++)    printf("%d ", UART.rcv_buf[i]);   //debug code
     if (UART.rcv_index)
         {
-            int int_var = 1;
+            int param_count = 0;
             char *p;
             if ((p = getUARTCmd()) != NULL && print)
                 printf("Command: [%s]\n", p);
-            else if(print)
-                    printf("No cmd available!");
+            else if (print)
+                     printf("No cmd available!");
             do
             {
                 if ((p = getUARTParam()) != NULL && p < UART.rcv_buf + SIZE && print)
-                    printf("Param#%X: [%s]\n", int_var++, p);
+                    printf("Param#%X: [%s]\n", ++param_count, p);
             } while (p != NULL);
+            if (print)
+                printf("#ofParams: %d\n", param_count);
             reshapeUARTbuffer();
-        }
+        return param_count;
+    }
+    return 0;
 }
 
 // Reset UART to enable new ISR controlled data reception and
